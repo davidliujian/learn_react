@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>React Tutorial</title>
+    <!-- Not present in the tutorial. Just for basic styling. -->
+    <link rel="stylesheet" href="css/base.css" />
+    <script src="https://unpkg.com/react@15.3.0/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@15.3.0/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <script src="https://unpkg.com/jquery@3.1.0/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/remarkable@1.7.1/dist/remarkable.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <!-- <script type="text/babel" src="scripts/example.js"></script> -->
+    <script type="text/babel">
+      // To get started with this tutorial running your own code, simply remove
+      // the script tag loading scripts/example.js and start writing code here.
+      var data = [
+                  {id: 1, author: "Pete Hunt", text: "This is the first comment"},
+                  {id: 2, author: "Jordan Walke", text: "This is *second* comment"}
+                ];
+
+      var Comment = React.createClass({
+          rawMarkup:function(){
+              var md = new Remarkable();
+              var rawMarkup = md.render(this.props.children.toString());
+              return {__html: rawMarkup  };
+          },
+          render:function(){
+            //   var md = new Remarkable();
+              return(
+                  <div className="comment">
+                      <h2 className="commentAuthor">
+                          {this.props.author}
+                      </h2>
+                { /*     {md.render(this.props.children.toString())}   */ }
+                        <span dangerouslySetInnerHTML={this.rawMarkup()} />
+                  </div>
+              );
+          }
+      });
+
+        var CommentList = React.createClass({
+            render:function(){
+                var commentNodes = this.props.data.map(function(comment){
+                    return (
+                        <Comment author={comment.author} key={comment.id} >
+                            {comment.text}
+                        </Comment>
+                    );
+                });
+
+                return (
+                    <div className="commentList">
+                        {commentNodes}
+                    </div>
+                );
+            }
+        });
+
+        var CommentForm = React.createClass({
+            getInitialState:function(){
+                return{author:'',text:''};
+            },
+            handleAuthorChange:function(e){
+                this.setState({author:e.target.value});
+            },
+            handleTextChange:function(e){
+                this.setState({text:e.target.value});
+            },
+            handleSubmit:function(e){
+                e.preventDefault();
+                var author = this.state.author.trim();
+                var text = this.state.text.trim();
+                if(!author || !text){
+                    return ;
+                }
+                this.props.onCommentSubmit({author:author,text:text});
+                this.setState({author:'',text:''});
+            },
+            render:function(){
+                return(
+                    <form className="commentForm" onSubmit={this.handleSubmit}>
+                        <input type="text" placeholder="Your name" value={this.state.author} onChange={this.handleAuthorChange} /><br/>
+                        <input type="text" placeholder="Say  something..." value={this.state.text} onChange={this.handleTextChange} /><br/>
+                        <input type="submit" value="post" />
+                    </form>
+                );
+            }
+        });
+
+        var CommentBox = React.createClass({
+            loadCommentsFromServer:function(){
+                $.ajax({
+                    url:this.props.url,
+                    dataType:'json',
+                    cache:false,
+                    success:function(data){
+                        this.setState({data:data});
+                    }.bind(this),
+                    error:function(xhr,status,err){
+                        console.error(this.props.url,status,err.toString());
+                    }.bind(this)
+                });
+            },
+            handleCommentSubmit:function(comment){
+                /*优化显示速度*/
+                var comments = this.state.data;
+                comment.id = Date.now();
+                var newComments = comments.concat([comment]);
+                this.setState({data:newComments});
+                /*优化显示速度*/
+
+                $.ajax({
+                    url:this.props.url,
+                    dataType:'json',
+                    type:'POST',
+                    data:comment,
+                    success:function(data){
+                        this.setState({data:data});
+                    }.bind(this),
+                    error:function(xhr, status, err) {
+                        console.error(this.props.url, status, err.toString());
+                    }.bind(this)
+                });
+            },
+            getInitialState:function(){
+                return {data:[]};
+            },
+            componentDidMount:function(){
+                this.loadCommentsFromServer();
+                setInterval(this.loadCommentsFromServer,this.props.pollInterval);
+            },
+            render:function(){
+                return(
+                    <div className="commentBox">
+                        <h1>comments</h1>
+                        <CommentList data={this.state.data} />
+                        <CommentForm onCommentSubmit = {this.handleCommentSubmit} />
+                    </div>
+                );
+            }
+        });
+        
+        ReactDOM.render(
+        //    <CommentBox data={data} />,
+            <CommentBox url="/api/comments" pollInterval={2000} />,
+            document.getElementById('content')
+        );
+    </script>
+  </body>
+</html>
