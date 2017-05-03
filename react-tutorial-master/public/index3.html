@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>React Tutorial</title>
+    <!-- Not present in the tutorial. Just for basic styling. -->
+    <link rel="stylesheet" href="css/base.css" />
+    <script src="https://unpkg.com/react@15.3.0/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@15.3.0/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <script src="https://unpkg.com/jquery@3.1.0/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/remarkable@1.7.1/dist/remarkable.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <!-- <script type="text/babel" src="scripts/example.js"></script> -->
+    <script type="text/babel">
+    var MyComponent = React.createClass({
+        propTypes: {
+            children: React.PropTypes.element.isRequired
+        },
+        render: function() {
+            return (
+              <div>
+                {this.props.children} // 这里必须是一个元素否则就会警告
+
+              </div>
+            );
+        }
+    });
+
+    var CheckLink = React.createClass({
+      render: function() {
+        // 这样会把 CheckList 所有的 props 复制到 <a>
+        return <a {...this.props}>{'√ '}{this.props.children}</a>;
+      }
+    });
+
+    class Counter extends React.Component{
+        constructor(props){
+            super(props);
+            this.state={count:props.initialCount};
+            this.tick = this.tick.bind(this);
+        }
+        tick(){
+            this.setState({count: this.state.count + 1});
+        }
+        render(){
+            return(
+                <div>
+                    <input type="text" value={this.state.count} />
+                    <div onClick={this.tick}>
+                        Clicks: {this.state.count}
+                    </div>
+                </div>
+            );
+        }
+    }
+    Counter.propTypes={initialCount: React.PropTypes.number  };
+    Counter.defaultProps = {initialCount : 0};
+
+    ReactDOM.render(<Counter  />,document.getElementById('content'));
+    // ReactDOM.render(
+    //   <CheckLink href="/checked.html">
+    //     Click here!
+    //   </CheckLink>,
+    //   document.getElementById('content')
+    // );
+//    ReactDOM.render(<MyComponent children={<span>xx</span>} />,document.getElementById('content'));
+    </script>
+</body>
+</html>
